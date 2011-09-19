@@ -38,12 +38,12 @@ Field.prototype.make_body = function() {
 	
 		// error icon
 		this.label_icon = $a(this.label_area,'img','',{margin:'-3px 4px -3px 4px'}); $dh(this.label_icon);
-		this.label_icon.src = 'images/icons/error.gif';
+		this.label_icon.src = 'lib/images/icons/error.gif';
 		this.label_icon.title = 'Mandatory value needs to be entered';
 
 		// error icon
 		this.suggest_icon = $a(this.label_area,'img','',{margin:'-3px 4px -3px 0px'}); $dh(this.suggest_icon);
-		this.suggest_icon.src = 'images/icons/bullet_arrow_down.png';
+		this.suggest_icon.src = 'lib/images/icons/bullet_arrow_down.png';
 		this.suggest_icon.title = 'With suggestions';
 
 	} else {
@@ -495,6 +495,10 @@ DateField.prototype.make_input = function() {
 	if(!this.user_fmt)this.user_fmt = 'dd-mm-yy';
 
 	this.input = $a(this.input_area, 'input');
+
+	// load the style
+	wn.require('lib/css/legacy/jquery-ui.css');
+
 	$(this.input).datepicker({
 		dateFormat: me.user_fmt.replace('yyyy','yy'), 
 		altFormat:'yy-mm-dd', 
@@ -804,7 +808,7 @@ CheckField.prototype.validate = function(v) {
 CheckField.prototype.onmake = function() {
 	this.checkimg = $a(this.disp_area, 'div');
 	var img = $a(this.checkimg, 'img');
-	img.src = 'images/ui/tick.gif';
+	img.src = 'lib/images/ui/tick.gif';
 	$dh(this.checkimg);
 }
 
@@ -1153,6 +1157,79 @@ function makeinput_popup(me, iconsrc, iconsrc1, iconsrc2) {
 
 var tmpid = 0;
 
+// ======================================================================================
+
+_f.ButtonField = function() { };
+_f.ButtonField.prototype = new Field();
+_f.ButtonField.prototype.with_label = 0;
+_f.ButtonField.prototype.init = function() {
+	this.prev_button = null;
+	// if previous field is a button, add it to the same div!
+	
+	// button-set structure
+	// + wrapper (1st button)
+	// 		+ input_area
+	//			+ button_area
+	//			+ button_area
+	//			+ button_area
+	
+	if(!this.frm) return;
+	
+	if(cur_frm && 
+		cur_frm.fields[cur_frm.fields.length-1] &&
+			cur_frm.fields[cur_frm.fields.length-1].df.fieldtype=='Button') {
+				
+		this.make_body = function() {
+			this.prev_button = cur_frm.fields[cur_frm.fields.length-1];
+			if(!this.prev_button.prev_button) {
+				// first button, make the button area
+				this.prev_button.button_area = $a(this.prev_button.input_area, 'span');
+			}
+			this.wrapper = this.prev_button.wrapper;
+			this.input_area = this.prev_button.input_area;
+			this.disp_area = this.prev_button.disp_area;
+			
+			// all buttons in the same input_area
+			this.button_area = $a(this.prev_button.input_area, 'span');
+		}
+	}
+}
+_f.ButtonField.prototype.make_input = function() { var me = this;
+	if(!this.prev_button) {
+		$y(this.input_area,{marginTop:'4px', marginBottom: '4px'});
+	}
+
+	// make a button area for one button
+	if(!this.button_area) this.button_area = $a(this.input_area, 'span','',{marginRight:'4px'});
+	
+	// make the input
+	this.input = $btn(this.button_area, 
+		me.df.label.substr(0,20) + ((me.df.label.length>20) ? '..' : ''), null, {width:'170px', fontWeight:'bold'}, null, 1)
+
+	this.input.onclick = function() {
+		if(me.not_in_form) return;
+		this.disabled = 'disabled';
+		if(cur_frm.cscript[me.df.label] && (!me.in_filter)) {			
+			cur_frm.runclientscript(me.df.label, me.doctype, me.docname);
+			this.disabled = false;
+		} else {
+			cur_frm.runscript(me.df.options, me);
+			this.disabled = false;
+		}
+	}
+}
+
+_f.ButtonField.prototype.hide = function() { 
+	$dh(this.button_area);
+};
+
+_f.ButtonField.prototype.show = function() { 
+	$ds(this.button_area);
+};
+
+
+_f.ButtonField.prototype.set = function(v) { }; // No Setter
+_f.ButtonField.prototype.set_disp = function(val) {  } // No Disp on readonly
 
 // ======================================================================================
 
@@ -1175,11 +1252,11 @@ function make_field(docfield, doctype, parent, frm, in_grid, hide_label) { // Fa
 		case 'text':var f = new TextField(); break;
 		case 'small text':var f = new TextField(); break;
 		case 'select':var f = new SelectField(); break;
+		case 'button':var f = new _f.ButtonField(); break;
 		
 		// form fields
 		case 'code':var f = new _f.CodeField(); break;
 		case 'text editor':var f = new _f.CodeField(); break;
-		case 'button':var f = new _f.ButtonField(); break;
 		case 'table':var f = new _f.TableField(); break;
 		case 'section break':var f= new _f.SectionBreak(); break;
 		case 'column break':var f= new _f.ColumnBreak(); break;
