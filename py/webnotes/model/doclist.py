@@ -80,7 +80,10 @@ class DocList:
 		if self.obj: return self.obj
 
 		from webnotes.model.code import get_obj
-		self.obj = get_obj(doc=self.doc, doclist=self.children)
+		if self.children:
+			self.obj = get_obj(doc=self.doc, doclist=self.children)
+		else:
+			self.obj = get_obj(doc=self.doc)
 		return self.obj
 
 	def next(self):
@@ -194,18 +197,19 @@ class DocList:
 		"""
 			Save Children, with the new parent name
 		"""
-		for d in self.children:
-			deleted, local = d.fields.get('__deleted',0), d.fields.get('__islocal',0)
+		if self.children:
+			for d in self.children:
+				deleted, local = d.fields.get('__deleted',0), d.fields.get('__islocal',0)
 
-			if cint(local) and cint(deleted):
-				pass
+				if cint(local) and cint(deleted):
+					pass
 
-			elif d.fields.has_key('parent'):
-				if d.parent and (not d.parent.startswith('old_parent:')):
-					d.parent = self.doc.name # rename if reqd
-					d.parenttype = self.doc.doctype
+				elif d.fields.has_key('parent'):
+					if d.parent and (not d.parent.startswith('old_parent:')):
+						d.parent = self.doc.name # rename if reqd
+						d.parenttype = self.doc.doctype
 
-				d.save(new = cint(local))
+					d.save(new = cint(local))
 
 	def save(self, check_links=1):
 		"""

@@ -76,11 +76,12 @@ def getlist(doclist, field):
 	"""
 	from webnotes.utils import cint
 	l = []
-	for d in doclist:
-		if d.parent and (not d.parent.lower().startswith('old_parent:')) and d.parentfield == field:
-			l.append(d)
+	if doclist:
+		for d in doclist:
+			if d.parent and (not d.parent.lower().startswith('old_parent:')) and d.parentfield == field:
+				l.append(d)
 
-	l.sort(lambda a, b: cint(a.idx) - cint(b.idx))
+		l.sort(lambda a, b: cint(a.idx) - cint(b.idx))
 
 	return l
 
